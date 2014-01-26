@@ -1,4 +1,3 @@
-
 require 'active_support/core_ext/hash/keys'
 require 'active_support/inflector/methods'
 require 'active_support/core_ext/object/blank'
@@ -109,6 +108,7 @@ module Paperclip
           client.authorization.client_secret = @google_drive_credentials[:client_secret]
           client.authorization.access_token = @google_drive_credentials[:access_token]
           client.authorization.refresh_token = @google_drive_credentials[:refresh_token]
+          client.retries = 2
           client
         end
       end
