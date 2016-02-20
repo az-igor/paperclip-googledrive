@@ -4,7 +4,7 @@ require 'active_support/inflector/methods'
 require 'active_support/core_ext/object/blank'
 require 'yaml'
 require 'erb'
-require 'google/api_client'
+require 'google/apis/drive_v2'
 
 module Paperclip
 
@@ -48,7 +48,6 @@ module Paperclip
           else
             #upload(style, file) #style file
             client = google_api_client
-            drive = client.discovered_api('drive', 'v2')
             result = client.execute(
               :api_method => drive.files.get,
               :parameters => { 'fileId' => @google_drive_options[:public_folder_id],
@@ -82,7 +81,6 @@ module Paperclip
         @queued_for_delete.each do |path|
           Paperclip.log("delete #{path}")
           client = google_api_client
-          drive = client.discovered_api('drive', 'v2')
           file_id = search_for_title(path)
           unless file_id.nil?
             folder_id = find_public_folder
@@ -100,7 +98,7 @@ module Paperclip
         @google_api_client ||= begin
           assert_required_keys
         # Initialize the client & Google+ API
-          client = Google::APIClient.new(
+          client = Google::Apis::DriveV2::DriveService.new(
             application_name: @google_drive_credentials[:application_name] || 'ppc-gd',
             application_version: @google_drive_credentials[:application_version] || PaperclipGoogleDrive::VERSION
           )
@@ -114,7 +112,6 @@ module Paperclip
       #
       def google_drive
         client = google_api_client
-        drive = client.discovered_api('drive', 'v2')
         drive
       end
 
@@ -158,7 +155,6 @@ module Paperclip
                 'q' => "title contains '#{title}'", # full_title
                 'fields' => 'items/id'}
         client = google_api_client
-        drive = client.discovered_api('drive', 'v2')
         result = client.execute!(:api_method => drive.children.list,
                           :parameters => parameters)
         if result.data.items.length > 0
@@ -173,7 +169,6 @@ module Paperclip
       def metadata_by_id(file_id)
         if file_id.is_a? String
           client = google_api_client
-          drive = client.discovered_api('drive', 'v2')
           result = client.execute!(
             :api_method => drive.files.get,
             :parameters => {'fileId' => file_id,

@@ -1,4 +1,3 @@
-
 require 'active_support/core_ext/hash/keys'
 require 'active_support/inflector/methods'
 require 'active_support/core_ext/object/blank'
@@ -103,6 +102,7 @@ module Paperclip
           client = Google::Apis::DriveV3::DriveService.new
           client.client_options.application_name = @options[:application_name]
           client.authorization = authorize
+          set_public_folder_id(client)
           client
         end
       end
@@ -138,7 +138,7 @@ module Paperclip
       def search_for_title(title)
         client = google_drive_client
         result = client.list_files(
-          q: "'#{@google_drive_options[:public_folder_id]}' in parents and name contains '#{title}'",
+          q: "'#{@google_drive_options[:public_folder_id]}' in parents and name = '#{title}'",
           fields: 'files(id)'
         ).to_h
         if result[:files].length > 0
@@ -198,12 +198,12 @@ module Paperclip
       private
 
         def authorize
-          client_id = Google::Auth::ClientId.from_file(@client_secrets_path)
+          client_secrets_keys_hash = YAML.load_file(@client_secrets_path)
+          client_id = Google::Auth::ClientId.from_hash(client_secrets_keys_hash)
           token_store = Google::Auth::Stores::FileTokenStore.new(file: CREDENTIALS_PATH)
           authorizer = Google::Auth::UserAuthorizer.new(
             client_id, SCOPES, token_store)
-          user_id = 'default'
-          credentials = authorizer.get_credentials(user_id)
+          credentials = authorizer.get_credentials('default')
           if credentials.nil?
             # url = authorizer.get_authorization_url(
             #   base_url: OOB_URI)
@@ -225,6 +225,22 @@ module Paperclip
         # return extension of file
         def original_extension
           File.extname(original_filename)
+        end
+
+        def set_public_folder_id(client)
+          response = client.list_files(
+              q: "name = '#{@google_drive_options[:public_folder]}'",
+              fields: 'files(id)'
+            )
+          if response.files.empty?
+            file_metadata = {
+              name: @google_drive_options[:public_folder],
+              mime_type: 'application/vnd.google-apps.folder'
+            }
+            file = client.create_file(file_metadata, fields: 'id')
+            @google_drive_options[:public_folder_id] = file.id
+          end
+          @google_drive_options[:public_folder_id] = response.files.first.id
         end
     end
   end
