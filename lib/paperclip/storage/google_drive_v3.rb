@@ -200,19 +200,11 @@ module Paperclip
         def authorize
           client_secrets_keys_hash = YAML.load_file(@client_secrets_path)
           client_id = Google::Auth::ClientId.from_hash(client_secrets_keys_hash)
-          token_store = Google::Auth::Stores::FileTokenStore.new(file: CREDENTIALS_PATH)
+          token_store = get_token_store
           authorizer = Google::Auth::UserAuthorizer.new(
             client_id, SCOPES, token_store)
           credentials = authorizer.get_credentials('default')
           if credentials.nil?
-            # url = authorizer.get_authorization_url(
-            #   base_url: OOB_URI)
-            # puts "Open the following URL in the browser and enter the " +
-            #      "resulting code after authorization"
-            # puts url
-            # code = gets
-            # credentials = authorizer.get_and_store_credentials_from_code(
-            #   user_id: user_id, code: code, base_url: OOB_URI)
             raise UnauthorizedException, 'No credentials available, you need to generate a new one with the rake method.'
           end
           credentials
@@ -241,6 +233,18 @@ module Paperclip
             @google_drive_options[:public_folder_id] = file.id
           end
           @google_drive_options[:public_folder_id] = response.files.first.id
+        end
+
+        def get_token_store
+          if @google_drive_options[:token_store].respond_to?('call')
+             token_store = @google_drive_options[:token_store].call(self)
+             unless token_store.is_a? Google::Auth::TokenStore
+               token_store = Google::Auth::Stores::FileTokenStore.new(file: CREDENTIALS_PATH)
+             end
+             token_store
+           else
+             Google::Auth::Stores::FileTokenStore.new(file: CREDENTIALS_PATH)
+           end
         end
     end
   end
