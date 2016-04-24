@@ -8,3 +8,9 @@ namespace :google_drive do
   end
 end
 
+namespace :google_drive_v3 do
+  desc "Authorize Google Drive V3 account: "
+  task :authorize do
+    Paperclip::GoogleDrive::Rake.authorizeV3
+  end
+end

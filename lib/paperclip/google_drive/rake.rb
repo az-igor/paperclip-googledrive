@@ -1,5 +1,5 @@
 
-require 'google/api_client'
+require 'google/apis/drive_v2'
 
 module Paperclip
   module GoogleDrive
@@ -18,8 +18,7 @@ module Paperclip
         redirect_uri = $stdin.gets.chomp.strip
 
         # Create a new API client & load the Google Drive API
-        client = Google::APIClient.new(:application_name => 'ppc-gd', :application_version => PaperclipGoogleDrive::VERSION)
-        drive = client.discovered_api('drive', 'v2')
+        client = Google::Apis::DriveV2::DriveService.new(:application_name => 'ppc-gd', :application_version => PaperclipGoogleDrive::VERSION)
 
         client.authorization.client_id = client_id
         client.authorization.client_secret = client_secret
@@ -45,6 +44,34 @@ module Paperclip
         puts "client.authorization.access_token = '#{client.authorization.access_token}'"
         puts "client.authorization.refresh_token = '#{client.authorization.refresh_token}'"
         puts "\n"
+      end
+
+      def authorizeV3
+        if Rails.application.config.paperclip_defaults[:client_secrets_path].nil?
+          puts "You need to specify a `client_secrets_path` in paperclip config"
+          return
+        end
+        client_secrets_keys_hash = YAML.load_file(Rails.application.config.paperclip_defaults[:client_secrets_path])
+        client_id = Google::Auth::ClientId.from_hash(client_secrets_keys_hash)
+        token_store = Google::Auth::Stores::FileTokenStore.new(
+          file: Paperclip::Storage::GoogleDriveV3::CREDENTIALS_PATH
+        )
+        authorizer = Google::Auth::UserAuthorizer.new(
+          client_id, Paperclip::Storage::GoogleDriveV3::SCOPES, token_store)
+        credentials = authorizer.get_credentials('default')
+        if credentials.nil?
+          url = authorizer.get_authorization_url(
+            base_url: Paperclip::Storage::GoogleDriveV3::OOB_URI)
+          puts "Open the following URL in the browser and enter the " +
+               "resulting code after authorization"
+          puts url
+          code = $stdin.gets.chomp.strip
+          credentials = authorizer.get_and_store_credentials_from_code(
+            user_id: 'default', code: code, base_url: Paperclip::Storage::GoogleDriveV3::OOB_URI)
+        end
+        puts "\nAuthorization completed.\n\n"
+        puts "Client id = '#{client_id.id}'"
+        puts "Client secret = '#{client_id.secret}'"
       end
     end
   end
