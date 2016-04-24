@@ -40,7 +40,7 @@ module Paperclip
 
         base.instance_eval do
           # @google_drive_credentials = parse_credentials(@options[:CLIENT_SECRETS_PATH] || {})
-          @client_secrets_path = @options[:client_secrets_path]
+          @client_secrets_path = @options[:google_drive_credentials]
           @google_drive_options = @options[:google_drive_options] || {}
           google_drive_client # Force validations of credentials
         end
