@@ -156,7 +156,7 @@ module Paperclip
                 'q' => "title contains '#{title}'", # full_title
                 'fields' => 'items/id'}
         client = google_api_client
-        result = client.execute!(:api_method => drive.children.list,
+        result = client.execute!(:api_method => client.children.list,
                           :parameters => parameters)
         if result.data.items.length > 0
           result.data.items[0]['id']
