@@ -97,15 +97,16 @@ module Paperclip
         @google_api_client ||= begin
           assert_required_keys
         # Initialize the client & Google+ API
-          client = Google::Apis::DriveV2::DriveService.new(
-            application_name: @google_drive_credentials[:application_name] || 'ppc-gd',
-            application_version: @google_drive_credentials[:application_version] || PaperclipGoogleDrive::VERSION
-          )
-          client.authorization.client_id = @google_drive_credentials[:client_id]
-          client.authorization.client_secret = @google_drive_credentials[:client_secret]
-          client.authorization.access_token = @google_drive_credentials[:access_token]
-          client.authorization.refresh_token = @google_drive_credentials[:refresh_token]
-          client.retries = 2
+          client = Google::Apis::DriveV2::DriveService.new()
+          client.client_options.application_name = (@google_drive_credentials[:application_name] || 'ppc-gd')
+          client.client_options.application_version = (@google_drive_credentials[:application_version] || PaperclipGoogleDrive::VERSION)
+          client.authorization = {
+            client_id: @google_drive_credentials[:client_id],
+            client_secret: @google_drive_credentials[:client_secret],
+            access_token: @google_drive_credentials[:access_token],
+            refresh_token: @google_drive_credentials[:refresh_token]
+          }
+          client.request_options.retries = 2
           client
         end
       end
