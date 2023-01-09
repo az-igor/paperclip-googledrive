@@ -3,7 +3,7 @@ require 'active_support/inflector/methods'
 require 'active_support/core_ext/object/blank'
 require 'yaml'
 require 'erb'
-#require 'google/api_client'
+require 'google/api_client'
 
 module Paperclip
 
