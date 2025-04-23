@@ -5,6 +5,7 @@ require "paperclip/version"
 
 Gem::Specification.new do |gem|
   gem.name          = "paperclip-googledrive"
+  # Igor: is the below change taken in???
   gem.version       = "0.1.3"
   gem.authors       = ['evinsou']
   gem.email         = ["evinsou@gmail.com"]
